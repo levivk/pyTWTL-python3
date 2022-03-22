@@ -20,7 +20,7 @@ import subprocess as sp
 import itertools as it
 import operator as op
 from .model import Model
-from . import ltl2ba_binary
+# from . import ltl2ba_binary
 import logging
 from functools import reduce
 

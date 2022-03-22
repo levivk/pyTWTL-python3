@@ -1,6 +1,13 @@
 from subprocess import check_output
 import yaml
 import networkx as nx
+import platform
+import os
+
+from . import dfa
+
+LINUX_BIN_DIR = 'bin-linux'
+MAC_BIN_DIR = 'bin-darwin'
 
 def old_nx_nodes(g):
     return list(iter(g.node.items()))
@@ -24,13 +31,31 @@ def twtl_to_dfa(formula, kind, norm=False, dont_optimize=False):
     if kind not in ['normal', 'infinity', 'both']:
         raise ValueError(f'Valid options for argument "kind" are "normal", "infinity", or "both". Received "{kind}".')
 
-    # get output serialized as yaml
-    yaml_serialized_data = check_output(['./bin-linux/twtl_translate', formula, '--kind=' + kind], text=True)
-    # with open('yaml_dump.yaml', "r") as f:
-    #     data = f.read()
+    # Check system
+    sys = platform.system()
+    if sys == "Linux":
+        bin_dir = LINUX_BIN_DIR
+    elif sys == "Darwin":
+        bin_dir = MAC_BIN_DIR
+    else:
+        raise Exception("Unsupported system: " + sys)
+
+    # prepare to run
+    file_path = os.path.dirname(os.path.abspath(__file__))
+    bin_path = os.path.join(file_path, bin_dir, 'twtl_translate')
+    args = [bin_path, formula, '--kind=' + kind]
+
+    # run program and get output serialized as yaml
+    yaml_serialized_data = check_output(args, text=True)
 
     # python 2 to 3 yaml convert
     yaml_serialized_data = yaml_serialized_data.replace('__builtin__', 'builtins')
+
+    # Adapt to repackaging
+    yaml_serialized_data = yaml_serialized_data.replace('!!python/object:lomap', '!!python/object:pyTWTL.lomap')
+    yaml_serialized_data = yaml_serialized_data.replace('!!python/object:dfa', '!!python/object:pyTWTL.dfa')
+
+    # This could execute arbitrary code, but the source is local and the system would have to already be comprimised to provide arbitrary yaml
     tup = yaml.unsafe_load(yaml_serialized_data)
 
     # Create a dictionary to hold the return values, rather than a tuple with possible ordering errors.
