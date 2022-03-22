@@ -19,9 +19,10 @@ import re
 import subprocess as sp
 import itertools as it
 import operator as op
-from model import Model
+from .model import Model
 from . import ltl2ba_binary
 import logging
+from functools import reduce
 
 # Logger configuration
 logger = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ class Buchi(Model):
 			self.props = list(props) if props is not None else []
 			# Form the bitmap dictionary of each proposition
 			# Note: range goes upto rhs-1
-			self.props = dict(zip(self.props, map(lambda x: 2 ** x, range(0, len(self.props)))))
+			self.props = dict(list(zip(self.props, [2 ** x for x in range(0, len(self.props))])))
 
 		# Alphabet is the power set of propositions, where each element
 		# is a symbol that corresponds to a tuple of propositions
@@ -64,7 +65,7 @@ Nodes: {nodes}
 Edges: {edges}
 		'''.format(name=self.name, directed=self.directed, multi=self.multi,
 				   props=self.props, alphabet=self.alphabet,
-				   init=self.init.keys(), final=self.final,
+				   init=list(self.init.keys()), final=self.final,
 				   nodes=self.g.nodes(data=True),
 				   edges=self.g.edges(data=True))
 	
@@ -89,7 +90,7 @@ Edges: {edges}
 		except Exception as ex:
 			raise Exception(__name__, "Problem running ltl2ba: '%s'" % ex)
 
-		lines = map(lambda x: x.strip(), lines)
+		lines = [x.strip() for x in lines]
 
 		##
 		# Get the set of propositions
@@ -106,7 +107,7 @@ Edges: {edges}
 
 		# Form the bitmap dictionary of each proposition
 		# Note: range goes upto rhs-1
-		self.props = dict(zip(props, map(lambda x: 2 ** x, range(0, len(props)))))
+		self.props = dict(list(zip(props, [2 ** x for x in range(0, len(props))])))
 
 		# Alphabet is the power set of propositions, where each element
 		# is a symbol that corresponds to a tuple of propositions
@@ -118,7 +119,7 @@ Edges: {edges}
 		del lines[-1]
 
 		# remove 'if', 'fi;' lines
-		lines = filter(lambda x: x != 'if' and x != 'fi;', lines)
+		lines = [x for x in lines if x != 'if' and x != 'fi;']
 
 		# '::.*' means transition, '.*:' means state
 		# print '\n'.join(lines)
@@ -173,7 +174,7 @@ Edges: {edges}
 		Returns symbols from the automaton's alphabet which contain the given
 		atomic proposition.
 		"""
-		return set(filter(lambda symbol: True if self.props[prop] & symbol else False, self.alphabet))
+		return set([symbol for symbol in self.alphabet if (True if self.props[prop] & symbol else False)])
 
 	def symbols_wo_prop(self, prop):
 		"""
@@ -218,7 +219,7 @@ Edges: {edges}
 
 		# Copy the old props
 		det.props = dict()
-		for k,v in self.props.iteritems():
+		for k,v in self.props.items():
 			det.props[k] = v
 
 		# Discover states and transitions
@@ -230,12 +231,12 @@ Edges: {edges}
 			next_states = dict()
 			for cur_state in cur_state_set:
 				for _,next_state,data in self.g.out_edges_iter(cur_state, True):
-					inp = iter(data['input']).next()
+					inp = next(iter(data['input']))
 					if inp not in next_states:
 						next_states[inp] = set()
 					next_states[inp].add(next_state)
 
-			for inp,next_state_set in next_states.iteritems():
+			for inp,next_state_set in next_states.items():
 				if next_state_set not in state_map:
 					state_map.append(next_state_set)
 				next_state_i = state_map.index(next_state_set)
@@ -250,7 +251,7 @@ Edges: {edges}
 			ins = set()
 			for u,v,d in det.g.out_edges_iter(state,True):
 				assert len(d['input']) == 1
-				inp = iter(d['input']).next()
+				inp = next(iter(d['input']))
 				if inp in ins:
 					assert False
 				ins.add(inp)

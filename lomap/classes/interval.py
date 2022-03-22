@@ -295,7 +295,7 @@ class Interval(object):
 		except:
 			raise TypeError("Unsupported operand types for comparison: '%s' and '%s'." % (self.__class__.__name__, other.__class__.__name__))
 
-	def __nonzero__(self):
+	def __bool__(self):
 		"""
 		Returns True if the interval is non-empty.
 		Note that an interval can be 0-length but still be non-empty.

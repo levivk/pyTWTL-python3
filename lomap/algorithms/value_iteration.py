@@ -119,7 +119,7 @@ def policy_synthesis(p, backward=False):
 					ctrl_rwds[d['control']] += val[t]*d['prob']
 		
 				# Update act_val and act_max for this state as required
-				for this_ctrl, this_rwd in ctrl_rwds.iteritems():
+				for this_ctrl, this_rwd in ctrl_rwds.items():
 					diff = abs(this_rwd - val[s])
 					act_val[s][this_ctrl] = this_rwd
 					if diff <= 1e-9:
@@ -147,7 +147,7 @@ def policy_synthesis(p, backward=False):
 					ctrl_rwds[d['control']] += val[t]*d['prob']
 		
 				# Update act_val and act_max for this state as required
-				for this_ctrl, this_rwd in ctrl_rwds.iteritems():
+				for this_ctrl, this_rwd in ctrl_rwds.items():
 					diff = abs(this_rwd - val[s])
 					act_val[s][this_ctrl] = this_rwd
 					if diff <= 1e-9:

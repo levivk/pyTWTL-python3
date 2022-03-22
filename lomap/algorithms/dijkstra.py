@@ -75,7 +75,7 @@ def subset_to_subset_dijkstra_path_value(source_set, G, target_set, combine_fn =
 				# Don't allow degenerate paths
 				# Add all neighbors of source to start the algorithm
 				seen = dict()
-				for w,edgedict in iter(G[source].items()):
+				for w,edgedict in iter(list(G[source].items())):
 					edgedata = edgedict[0]
 					vw_dist = edgedata[weight_key]
 					seen[w] = vw_dist
@@ -89,7 +89,7 @@ def subset_to_subset_dijkstra_path_value(source_set, G, target_set, combine_fn =
 	
 				dist[v] = d	# Update distance to this node
 	
-				for w,edgedict in iter(G[v].items()):
+				for w,edgedict in iter(list(G[v].items())):
 					edgedata = edgedict[0]
 					vw_dist = dist[v] + edgedata[weight_key]
 					if w in dist:
@@ -100,13 +100,13 @@ def subset_to_subset_dijkstra_path_value(source_set, G, target_set, combine_fn =
 						heapq.heappush(fringe,(vw_dist,w))
 	
 			# Remove the entries that we are not interested in 
-			for key in dist.keys():
+			for key in list(dist.keys()):
 				if key not in target_set:
 					dist.pop(key)
 	
 			# Add inf cost to target nodes not in dist
 			for t in target_set:
-				if t not in dist.keys():
+				if t not in list(dist.keys()):
 					dist[t] = float('inf')
 	
 			# Save the distance info for this source
@@ -128,7 +128,7 @@ def subset_to_subset_dijkstra_path_value(source_set, G, target_set, combine_fn =
 				# Don't allow degenerate paths
 				# Add all neighbors of source to start the algorithm
 				seen = dict()
-				for w,edgedict in iter(G[source].items()):
+				for w,edgedict in iter(list(G[source].items())):
 					edgedata = edgedict[0]
 					vw_dist = edgedata[weight_key]
 					seen[w] = (vw_dist,vw_dist)
@@ -142,7 +142,7 @@ def subset_to_subset_dijkstra_path_value(source_set, G, target_set, combine_fn =
 	
 				dist[v] = (d_bot,d_sum)	# Update distance to this node
 	
-				for w,edgedict in iter(G[v].items()):
+				for w,edgedict in iter(list(G[v].items())):
 					edgedata = edgedict[0]
 					vw_dist_bot = max(dist[v][0],edgedata[weight_key])
 					vw_dist_sum = dist[v][1] + edgedata[weight_key]
@@ -154,13 +154,13 @@ def subset_to_subset_dijkstra_path_value(source_set, G, target_set, combine_fn =
 						heapq.heappush(fringe,(vw_dist_bot,vw_dist_sum,w))
 	
 			# Remove the entries that we are not interested in 
-			for key in dist.keys():
+			for key in list(dist.keys()):
 				if key not in target_set:
 					dist.pop(key)
 	
 			# Add inf cost to target nodes not in dist
 			for t in target_set:
-				if t not in dist.keys():
+				if t not in list(dist.keys()):
 					dist[t] = (float('inf'),float('inf'))
 	
 			# Save the distance info for this source
@@ -220,7 +220,7 @@ def dijkstra_to_all(G, source, degen_paths = False, weight_key='weight'):
 		# Add all neighbors of source to start the algorithm
 		paths = dict()
 		seen = dict()
-		for w,edgedict in iter(G[source].items()):
+		for w,edgedict in iter(list(G[source].items())):
 			edgedata = edgedict[0]
 			vw_dist = edgedata[weight_key]
 			paths[w] = [source, w]
@@ -235,7 +235,7 @@ def dijkstra_to_all(G, source, degen_paths = False, weight_key='weight'):
 
 		dist[v] = d	# Update distance to this node
 
-		for w,edgedict in iter(G[v].items()):
+		for w,edgedict in iter(list(G[v].items())):
 			edgedata = edgedict[0]
 			vw_dist = dist[v] + edgedata[weight_key]
 			if w in dist:
@@ -321,7 +321,7 @@ def source_to_target_dijkstra(G, source, target, combine_fn = 'sum', degen_paths
 			# Add all neighbors of source to start the algorithm
 			paths = dict()
 			seen = dict()
-			for w,edgedict in iter(G[source].items()):
+			for w,edgedict in iter(list(G[source].items())):
 				edgedata = edgedict[0]
 				vw_dist = edgedata[weight_key]
 				paths[w] = [source, w]
@@ -338,7 +338,7 @@ def source_to_target_dijkstra(G, source, target, combine_fn = 'sum', degen_paths
 			if v == target: 
 				break	# Discovered path to target node
 
-			for w,edgedict in iter(G[v].items()):
+			for w,edgedict in iter(list(G[v].items())):
 				edgedata = edgedict[0]
 				vw_dist = dist[v] + edgedata[weight_key]
 				if cutoff is not None:
@@ -353,7 +353,7 @@ def source_to_target_dijkstra(G, source, target, combine_fn = 'sum', degen_paths
 					heapq.heappush(fringe,(vw_dist,w))
 
 		# Add inf cost to target if not in dist
-		if target not in dist.keys():
+		if target not in list(dist.keys()):
 			dist[target] = float('inf')
 			paths[target] = ['']
 
@@ -376,7 +376,7 @@ def source_to_target_dijkstra(G, source, target, combine_fn = 'sum', degen_paths
 			# Add all neighbors of source to start the algorithm
 			paths = dict()
 			seen = dict()
-			for w,edgedict in iter(G[source].items()):
+			for w,edgedict in iter(list(G[source].items())):
 				edgedata = edgedict[0]
 				vw_dist = edgedata[weight_key]
 				paths[w] = [source, w]
@@ -393,7 +393,7 @@ def source_to_target_dijkstra(G, source, target, combine_fn = 'sum', degen_paths
 			if v == target: 
 				break	# Discovered path to target node
 
-			for w,edgedict in iter(G[v].items()):
+			for w,edgedict in iter(list(G[v].items())):
 				edgedata = edgedict[0]
 				vw_dist_bot = max(dist[v][0], edgedata[weight_key])
 				vw_dist_sum = dist[v][1] + edgedata[weight_key]
@@ -409,7 +409,7 @@ def source_to_target_dijkstra(G, source, target, combine_fn = 'sum', degen_paths
 					heapq.heappush(fringe,(vw_dist_bot,vw_dist_sum,w))
 
 		# Add inf cost to target if not in dist
-		if target not in dist.keys():
+		if target not in list(dist.keys()):
 			dist[target] = (float('inf'),float('inf'))
 			paths[target] = ['']
 

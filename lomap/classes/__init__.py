@@ -31,8 +31,8 @@ elif sys.platform == 'darwin':
 	ltl2ba_binary = pr.resource_filename('lomap','binaries/mac/ltl2ba')
 	scheck_binary = pr.resource_filename('lomap','binaries/mac/scheck2')
 else:
-	print>>sys.stderr, sys.platform, 'platform not supported yet!'
-	print>>sys.stderr, 'Binaries will not work!'
+	print(sys.platform, 'platform not supported yet!', file=sys.stderr)
+	print('Binaries will not work!', file=sys.stderr)
 	ltl2ba_binary = None
 	scheck_binary = None
 	
@@ -41,10 +41,10 @@ else:
 if ltl2ba_binary != None and scheck_binary != None:
 	if not os.access(ltl2ba_binary, os.X_OK) or not os.access(scheck_binary, os.X_OK):
 		try:
-			print "You'll be prompted for root password to make some third party binaries executable."
-			print "Binaries that will be made executable are:"
-			print ltl2ba_binary
-			print scheck_binary
+			print("You'll be prompted for root password to make some third party binaries executable.")
+			print("Binaries that will be made executable are:")
+			print(ltl2ba_binary)
+			print(scheck_binary)
 			subprocess.Popen(['sudo', 'chmod', '+x', ltl2ba_binary, scheck_binary], stdout=subprocess.PIPE, stdin=subprocess.PIPE).communicate()
 		except Exception as ex:
 			raise Exception(__name__, "Problem setting permissions of binaries: '%s'" % ex)

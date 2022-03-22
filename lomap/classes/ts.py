@@ -17,7 +17,7 @@
 import networkx as nx
 import re
 import itertools
-from model import Model
+from .model import Model
 
 class FileError(Exception):
 	pass
@@ -102,10 +102,10 @@ class Ts(Model):
 		
 		# Add state attributes to nodes of the graph
 		try:
-			for node in state_attr.keys():
+			for node in list(state_attr.keys()):
 				# Reset label of the node
 				self.g.node[node]['label'] = node
-				for key in state_attr[node].keys():
+				for key in list(state_attr[node].keys()):
 					# Copy defined attributes to the node in the graph
 					# This is a shallow copy, we don't touch state_attr[node][key] afterwards
 					self.g.node[node][key] = state_attr[node][key]

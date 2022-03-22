@@ -21,6 +21,7 @@ from ..classes.ts import Ts
 from ..classes.markov import Markov
 import sys
 import logging
+from functools import reduce
 
 # Logger configuration
 logger = logging.getLogger(__name__)
@@ -36,10 +37,10 @@ def ts_times_fsa(ts, fsa):
 
 	# Iterate over initial states of the TS
 	init_states = []
-	for init_ts in ts.init.keys():
+	for init_ts in list(ts.init.keys()):
 		init_prop = ts.g.node[init_ts].get('prop',set())
 		# Iterate over the initial states of the FSA
-		for init_fsa in fsa.init.keys():
+		for init_fsa in list(fsa.init.keys()):
 			# Add the initial states to the graph and mark them as initial
 			for act_init_fsa in fsa.next_states_of_fsa(init_fsa, init_prop):
 				init_state = (init_ts, act_init_fsa)
@@ -97,10 +98,10 @@ def ts_times_buchi(ts, buchi):
 
 	# Iterate over initial states of the TS
 	init_states = []
-	for init_ts in ts.init.keys():
+	for init_ts in list(ts.init.keys()):
 		init_prop = ts.g.node[init_ts].get('prop',set())
 		# Iterate over the initial states of the FSA
-		for init_buchi in buchi.init.keys():
+		for init_buchi in list(buchi.init.keys()):
 			# Add the initial states to the graph and mark them as initial
 			for act_init_buchi in buchi.next_states_of_buchi(init_buchi, init_prop):
 				init_state = (init_ts, act_init_buchi)
@@ -155,14 +156,14 @@ def ts_times_ts(ts_tuple):
 
 	# Initial state label is the tuple of initial states' labels
 	# NOTE: We assume deterministic TS (that's why we pick [0])
-	assert all(map(lambda ts: True if len(ts.init) == 1 else False, ts_tuple))
-	init_state = tuple(map(lambda ts: ts.init.keys()[0], ts_tuple))
+	assert all([True if len(ts.init) == 1 else False for ts in ts_tuple])
+	init_state = tuple([list(ts.init.keys())[0] for ts in ts_tuple])
 	product_ts = Ts()
 	product_ts.init[init_state] = 1
 
 	# Props satisfied at init_state is the union of props
 	# For each ts, get the prop of init state or empty set
-	init_prop = map(lambda ts: ts.g.node[ts.init.keys()[0]].get('prop',set()), ts_tuple)
+	init_prop = [ts.g.node[list(ts.init.keys())[0]].get('prop',set()) for ts in ts_tuple]
 
 	# This makes each set in the list a new argument and takes the union
 	init_prop = set.union(*init_prop)
@@ -177,12 +178,12 @@ def ts_times_ts(ts_tuple):
 	while(stack):
 		cur_state = stack.pop()
 		# Actual source states of traveling states
-		source_state = tuple(map(lambda q: q[0] if type(q) == tuple else q, cur_state))
+		source_state = tuple([q[0] if type(q) == tuple else q for q in cur_state])
 		# Time spent since actual source states
-		time_spent = tuple(map(lambda q: q[2] if type(q) == tuple else 0, cur_state))
+		time_spent = tuple([q[2] if type(q) == tuple else 0 for q in cur_state])
 
 		# Iterate over all possible transitions
-		for tran_tuple in it.product(*map(lambda t,q: t.next_states_of_wts(q), ts_tuple, cur_state)):
+		for tran_tuple in it.product(*list(map(lambda t,q: t.next_states_of_wts(q), ts_tuple, cur_state))):
 			# tran_tuple is a tuple of m-tuples (m: size of ts_tuple)
 
 			# First element of each tuple: next_state
@@ -202,7 +203,7 @@ def ts_times_ts(ts_tuple):
 				 # Props satisfied at next_state is the union of props
 				 # For each ts, get the prop of next state or empty set
 				 # Note: we use .get(ns, {}) as this might be a travelling state
-				 next_prop = map(lambda ts,ns: ts.g.node.get(ns,{}).get('prop',set()), ts_tuple, next_state)
+				 next_prop = list(map(lambda ts,ns: ts.g.node.get(ns,{}).get('prop',set()), ts_tuple, next_state))
 				 next_prop = set.union(*next_prop)
 
 				 # Add the new state
@@ -241,11 +242,11 @@ def markov_times_markov(markov_tuple):
 	stack=[]
 
 	# Find the initial states of the MDP
-	for init_state in it.product(*map(lambda m: m.init.keys(), markov_tuple)):
+	for init_state in it.product(*[list(m.init.keys()) for m in markov_tuple]):
 		
 		# Find initial probability and propositions of this state
-		init_prob = reduce(lambda x,y: x*y, map(lambda m, s: m.init[s], markov_tuple, init_state))
-		init_prop = reduce(lambda x,y: x|y, map(lambda m, s: m.g.node[s].get('prop',set()), markov_tuple, init_state))
+		init_prob = reduce(lambda x,y: x*y, list(map(lambda m, s: m.init[s], markov_tuple, init_state)))
+		init_prop = reduce(lambda x,y: x|y, list(map(lambda m, s: m.g.node[s].get('prop',set()), markov_tuple, init_state)))
 
 		flat_init_state = flatten_tuple(init_state)
 
@@ -260,12 +261,12 @@ def markov_times_markov(markov_tuple):
 		cur_state = stack.pop()
 
 		# Actual source states of traveling states
-		source_state = tuple(map(lambda q: q[0] if isinstance(q, tuple) and len(q)==3 and isinstance(q[2], (int, float, long)) else q, cur_state))
+		source_state = tuple([q[0] if isinstance(q, tuple) and len(q)==3 and isinstance(q[2], (int, float)) else q for q in cur_state])
 		# Time spent since actual source states
-		time_spent = tuple(map(lambda q: q[2] if isinstance(q, tuple) and len(q)==3 and isinstance(q[2], (int, float, long)) else 0, cur_state))
+		time_spent = tuple([q[2] if isinstance(q, tuple) and len(q)==3 and isinstance(q[2], (int, float)) else 0 for q in cur_state])
 
 		# Iterate over all possible transitions
-		for tran_tuple in it.product(*map(lambda t,q: t.next_states_of_markov(q), markov_tuple, cur_state)):
+		for tran_tuple in it.product(*list(map(lambda t,q: t.next_states_of_markov(q), markov_tuple, cur_state))):
 			# tran_tuple is a tuple of m-tuples (m: size of ts_tuple)
 
 			# First element of each tuple: next_state
@@ -294,7 +295,7 @@ def markov_times_markov(markov_tuple):
 				 # Props satisfied at next_state is the union of props
 				 # For each ts, get the prop of next state or empty set
 				 # Note: we use .get(ns, {}) as this might be a travelling state
-				 next_prop = map(lambda m,ns: m.g.node.get(ns,{}).get('prop',set()), markov_tuple, next_state)
+				 next_prop = list(map(lambda m,ns: m.g.node.get(ns,{}).get('prop',set()), markov_tuple, next_state))
 				 next_prop = set.union(*next_prop)
 
 				 # Add the new state
@@ -326,10 +327,10 @@ def markov_times_fsa(markov, fsa):
 	# Stack for depth first search
 	stack = []
 	# Iterate over initial states of the markov model
-	for init_markov in markov.init.keys():
+	for init_markov in list(markov.init.keys()):
 		init_prop = markov.g.node[init_markov].get('prop',set())
 		# Iterate over the initial states of the FSA
-		for init_fsa in fsa.init.keys():
+		for init_fsa in list(fsa.init.keys()):
 			# Add the initial states to the graph and mark them as initial
 			for act_init_fsa in fsa.next_states_of_fsa(init_fsa, init_prop):
 				init_state = (init_markov, act_init_fsa)

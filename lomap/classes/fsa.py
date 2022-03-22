@@ -19,9 +19,10 @@ import re
 import subprocess as sp
 import itertools as it
 import operator as op
-from model import Model
+from .model import Model
 from . import scheck_binary
 import logging
+from functools import reduce
 
 # Logger configuration
 logger = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ class Fsa(Model):
 			self.props = list(props) if props is not None else []
 			# Form the bitmap dictionary of each proposition
 			# Note: range goes upto rhs-1
-			self.props = dict(zip(self.props, map(lambda x: 2 ** x, range(0, len(self.props)))))
+			self.props = dict(list(zip(self.props, [2 ** x for x in range(0, len(self.props))])))
 
 		# Alphabet is the power set of propositions, where each element
 		# is a symbol that corresponds to a tuple of propositions
@@ -64,7 +65,7 @@ Nodes: {nodes}
 Edges: {edges}
 		'''.format(name=self.name, directed=self.directed, multi=self.multi,
 				   props=self.props, alphabet=self.alphabet,
-				   init=self.init.keys(), final=self.final,
+				   init=list(self.init.keys()), final=self.final,
 				   nodes=self.g.nodes(data=True),
 				   edges=self.g.edges(data=True))
 	
@@ -172,7 +173,7 @@ Edges: {edges}
 
 		# Form the bitmap dictionary of each proposition
 		# Note: range goes upto rhs-1
-		self.props = dict(zip(props, map(lambda x: 2 ** x, range(0, len(props)))))
+		self.props = dict(list(zip(props, [2 ** x for x in range(0, len(props))])))
 		self.name = 'FSA corresponding to formula: %s' % (formula)
 		self.final = set()
 		self.init = {}
@@ -198,7 +199,7 @@ Edges: {edges}
 		scheck_formula = ''.join([i if i != 'I' else 'i' for i in scheck_formula])
 
 		# Convert formula props to scheck props
-		for k,v in to_scheck.items():
+		for k,v in list(to_scheck.items()):
 			scheck_formula = scheck_formula.replace(k, v)
 
 		# Write formula to temporary file to be read by scheck
@@ -232,18 +233,18 @@ Edges: {edges}
 			
 		if load and not os.path.isfile(load): # save computed fsa
 			with open(load, 'w') as fout:
-				print>>fout, lines
+				print(lines, file=fout)
 
 
 		# Convert lines to list after leading/trailing spaces
-		lines = map(lambda x: x.strip(), lines)
+		lines = [x.strip() for x in lines]
 		#for l in lines: print l
 		#print '###############'
 
 		# 1st line: "NUM_OF_STATES NUM_OF_ACCEPTING_STATES"
 		# if NUM_OF_ACCEPTING_STATES is 0, all states are accepting
 		l = lines.pop(0)
-		state_cnt, final_cnt = map(int, l.split())
+		state_cnt, final_cnt = list(map(int, l.split()))
 		if final_cnt == 0:
 			final_cnt = state_cnt
 			all_accepting = True
@@ -299,7 +300,7 @@ Edges: {edges}
 					guard = stack.pop()
 
 				# Convert to regular props
-				for k,v in from_scheck.items():
+				for k,v in list(from_scheck.items()):
 					guard = guard.replace(k,v)
 				bitmaps = self.get_guard_bitmap(guard)
 				#print '%s -[ %s (%s) ]-> %s (init: %s, final: %s)' % (src, guard, bitmaps, dest, is_initial, is_final)
@@ -368,7 +369,7 @@ Edges: {edges}
 		self.g.add_edges_from([(state, 'virtual') for state in self.final])
 		# compute trap states
 		trap_states = set(self.g.nodes_iter())
-		trap_states -= set(nx.shortest_path_length(self.g, target='virtual').iterkeys())
+		trap_states -= set(nx.shortest_path_length(self.g, target='virtual').keys())
 		# remove trap state and virtual state
 		self.g.remove_nodes_from(trap_states | set(['virtual']))
 		return len(trap_states - set(['virtual'])) == 0
@@ -378,7 +379,7 @@ Edges: {edges}
 		Returns symbols from the automaton's alphabet which contain the given
 		atomic proposition.
 		"""
-		return set(filter(lambda symbol: True if self.props[prop] & symbol else False, self.alphabet))
+		return set([symbol for symbol in self.alphabet if (True if self.props[prop] & symbol else False)])
 
 	def symbols_wo_prop(self, prop):
 		"""
