@@ -162,157 +162,158 @@ Edges: {edges}
 
 		return formula
 
-	def fsa_from_cosafe_formula(self, formula, load=False):
+	# Commented out when adapting for python 3
+	# def fsa_from_cosafe_formula(self, formula, load=False):
 
-		# scheck expects a prefix co-safe ltl formula w/ props: p0, p1, ...
+	# 	# scheck expects a prefix co-safe ltl formula w/ props: p0, p1, ...
 
-		# Get the set of propositions
-		props = re.sub('[IGFX!\(\)&|U]', ' ', formula)
-		# TODO: implement true/false support
-		props = set(re.sub('\s+', ' ', props).strip().split())
+	# 	# Get the set of propositions
+	# 	props = re.sub('[IGFX!\(\)&|U]', ' ', formula)
+	# 	# TODO: implement true/false support
+	# 	props = set(re.sub('\s+', ' ', props).strip().split())
 
-		# Form the bitmap dictionary of each proposition
-		# Note: range goes upto rhs-1
-		self.props = dict(list(zip(props, [2 ** x for x in range(0, len(props))])))
-		self.name = 'FSA corresponding to formula: %s' % (formula)
-		self.final = set()
-		self.init = {}
+	# 	# Form the bitmap dictionary of each proposition
+	# 	# Note: range goes upto rhs-1
+	# 	self.props = dict(list(zip(props, [2 ** x for x in range(0, len(props))])))
+	# 	self.name = 'FSA corresponding to formula: %s' % (formula)
+	# 	self.final = set()
+	# 	self.init = {}
 
-		# Alphabet is the power set of propositions, where each element
-		# is a symbol that corresponds to a tuple of propositions
-		# Note: range goes upto rhs-1
-		self.alphabet = set(range(0, 2 ** len(self.props)))
+	# 	# Alphabet is the power set of propositions, where each element
+	# 	# is a symbol that corresponds to a tuple of propositions
+	# 	# Note: range goes upto rhs-1
+	# 	self.alphabet = set(range(0, 2 ** len(self.props)))
 
-		# Prepare from/to scheck conversion dictionaries
-		i = 0
-		to_scheck = dict()
-		from_scheck = dict()
-		for p in props:
-			scheck_p = 'p%d'%i
-			from_scheck[scheck_p] = p
-			to_scheck[p] = scheck_p
-			i += 1
+	# 	# Prepare from/to scheck conversion dictionaries
+	# 	i = 0
+	# 	to_scheck = dict()
+	# 	from_scheck = dict()
+	# 	for p in props:
+	# 		scheck_p = 'p%d'%i
+	# 		from_scheck[scheck_p] = p
+	# 		to_scheck[p] = scheck_p
+	# 		i += 1
 
-		# Convert infix to prefix
-		scheck_formula = Fsa.infix_formula_to_prefix(formula)
-		# Scheck expect implies operator (I) to be lower-case
-		scheck_formula = ''.join([i if i != 'I' else 'i' for i in scheck_formula])
+	# 	# Convert infix to prefix
+	# 	scheck_formula = Fsa.infix_formula_to_prefix(formula)
+	# 	# Scheck expect implies operator (I) to be lower-case
+	# 	scheck_formula = ''.join([i if i != 'I' else 'i' for i in scheck_formula])
 
-		# Convert formula props to scheck props
-		for k,v in list(to_scheck.items()):
-			scheck_formula = scheck_formula.replace(k, v)
+	# 	# Convert formula props to scheck props
+	# 	for k,v in list(to_scheck.items()):
+	# 		scheck_formula = scheck_formula.replace(k, v)
 
-		# Write formula to temporary file to be read by scheck
-		import os, sys
-		import tempfile
+	# 	# Write formula to temporary file to be read by scheck
+	# 	import os, sys
+	# 	import tempfile
 
-		if load and os.path.isfile(load): # load already computed fsa from file
-			with open(load, 'r') as fin:
-				lines = fin.readline()
-				lines = eval(lines.strip())
-		else: # compute fsa using scheck
-			delete = True
-			if sys.platform == 'win32': # windows hack
-				delete = False
+	# 	if load and os.path.isfile(load): # load already computed fsa from file
+	# 		with open(load, 'r') as fin:
+	# 			lines = fin.readline()
+	# 			lines = eval(lines.strip())
+	# 	else: # compute fsa using scheck
+	# 		delete = True
+	# 		if sys.platform == 'win32': # windows hack
+	# 			delete = False
 	
-			tf = tempfile.NamedTemporaryFile(delete=delete)
-			tf.write(scheck_formula)
-			tf.flush()
+	# 		tf = tempfile.NamedTemporaryFile(delete=delete)
+	# 		tf.write(scheck_formula)
+	# 		tf.flush()
 
-			# Execute scheck and get output
-			try:
-				lines = sp.check_output([scheck_binary, '-s', '-d', tf.name]).splitlines()
-			except Exception as ex:
-				raise Exception(__name__, "Problem running %s: '%s'" % (scheck_binary, ex))
+	# 		# Execute scheck and get output
+	# 		try:
+	# 			lines = sp.check_output([scheck_binary, '-s', '-d', tf.name]).splitlines()
+	# 		except Exception as ex:
+	# 			raise Exception(__name__, "Problem running %s: '%s'" % (scheck_binary, ex))
 
-			# Close temp file (automatically deleted)
-			tf.close()
+	# 		# Close temp file (automatically deleted)
+	# 		tf.close()
 		
-			if not delete: # windows hack
-				os.remove(tf.name)
+	# 		if not delete: # windows hack
+	# 			os.remove(tf.name)
 			
-		if load and not os.path.isfile(load): # save computed fsa
-			with open(load, 'w') as fout:
-				print(lines, file=fout)
+	# 	if load and not os.path.isfile(load): # save computed fsa
+	# 		with open(load, 'w') as fout:
+	# 			print(lines, file=fout)
 
 
-		# Convert lines to list after leading/trailing spaces
-		lines = [x.strip() for x in lines]
-		#for l in lines: print l
-		#print '###############'
+	# 	# Convert lines to list after leading/trailing spaces
+	# 	lines = [x.strip() for x in lines]
+	# 	#for l in lines: print l
+	# 	#print '###############'
 
-		# 1st line: "NUM_OF_STATES NUM_OF_ACCEPTING_STATES"
-		# if NUM_OF_ACCEPTING_STATES is 0, all states are accepting
-		l = lines.pop(0)
-		state_cnt, final_cnt = list(map(int, l.split()))
-		if final_cnt == 0:
-			final_cnt = state_cnt
-			all_accepting = True
-		else:
-			all_accepting = False
+	# 	# 1st line: "NUM_OF_STATES NUM_OF_ACCEPTING_STATES"
+	# 	# if NUM_OF_ACCEPTING_STATES is 0, all states are accepting
+	# 	l = lines.pop(0)
+	# 	state_cnt, final_cnt = list(map(int, l.split()))
+	# 	if final_cnt == 0:
+	# 		final_cnt = state_cnt
+	# 		all_accepting = True
+	# 	else:
+	# 		all_accepting = False
 
-		# Set of remaining states
-		rem_states = set(['%s'%i for i in range(0,state_cnt)])
+	# 	# Set of remaining states
+	# 	rem_states = set(['%s'%i for i in range(0,state_cnt)])
 
-		# Parse state defs
-		while True:
-			# 1st part: "STATE_NAME IS_INITIAL -1" for regular states
-			# "STATE_NAME IS_INITIAL ACCEPTANCE_SET -1" for final states
-			l = lines.pop(0).strip().split()
-			src = l[0]
-			is_initial = True if l[1] != '0' else False
-			is_final = True if len(l) > 3 else False
+	# 	# Parse state defs
+	# 	while True:
+	# 		# 1st part: "STATE_NAME IS_INITIAL -1" for regular states
+	# 		# "STATE_NAME IS_INITIAL ACCEPTANCE_SET -1" for final states
+	# 		l = lines.pop(0).strip().split()
+	# 		src = l[0]
+	# 		is_initial = True if l[1] != '0' else False
+	# 		is_final = True if len(l) > 3 else False
 
-			# Mark as done
-			rem_states.remove(src)
+	# 		# Mark as done
+	# 		rem_states.remove(src)
 
-			# Mark as initial/final if required
-			if is_initial:
-				self.init[src] = 1
-			if is_final:
-				self.final.add(src)
+	# 		# Mark as initial/final if required
+	# 		if is_initial:
+	# 			self.init[src] = 1
+	# 		if is_final:
+	# 			self.final.add(src)
 
-			while True:
-				# 2nd part: "DEST PREFIX_GUARD_FORMULA" 
-				l = lines.pop(0).strip().split()
-				if l == ['-1']:
-					# Done w/ this state
-					break
-				dest = l[0]
-				l.pop(0)
-				guard = ''
-				# Now l holds the guard in prefix form
-				if l == ['t']:
-					guard = '(1)'
-				else:
-					l.reverse()
-					stack = []
-					for e in l:
-						if e in ['&', '|']:
-							op1 = stack.pop()
-							op2 = stack.pop()
-							stack.append('(%s %s %s)' % (op1, e, op2))
-						elif e == '!':
-							op = stack.pop()
-							stack.append('!%s' % (op))
-						else:
-							stack.append(e)
-					guard = stack.pop()
+	# 		while True:
+	# 			# 2nd part: "DEST PREFIX_GUARD_FORMULA" 
+	# 			l = lines.pop(0).strip().split()
+	# 			if l == ['-1']:
+	# 				# Done w/ this state
+	# 				break
+	# 			dest = l[0]
+	# 			l.pop(0)
+	# 			guard = ''
+	# 			# Now l holds the guard in prefix form
+	# 			if l == ['t']:
+	# 				guard = '(1)'
+	# 			else:
+	# 				l.reverse()
+	# 				stack = []
+	# 				for e in l:
+	# 					if e in ['&', '|']:
+	# 						op1 = stack.pop()
+	# 						op2 = stack.pop()
+	# 						stack.append('(%s %s %s)' % (op1, e, op2))
+	# 					elif e == '!':
+	# 						op = stack.pop()
+	# 						stack.append('!%s' % (op))
+	# 					else:
+	# 						stack.append(e)
+	# 				guard = stack.pop()
 
-				# Convert to regular props
-				for k,v in list(from_scheck.items()):
-					guard = guard.replace(k,v)
-				bitmaps = self.get_guard_bitmap(guard)
-				#print '%s -[ %s (%s) ]-> %s (init: %s, final: %s)' % (src, guard, bitmaps, dest, is_initial, is_final)
-				self.g.add_edge(src, dest, None, {'weight': 0, 'input': bitmaps, 'guard' : guard, 'label': guard})
+	# 			# Convert to regular props
+	# 			for k,v in list(from_scheck.items()):
+	# 				guard = guard.replace(k,v)
+	# 			bitmaps = self.get_guard_bitmap(guard)
+	# 			#print '%s -[ %s (%s) ]-> %s (init: %s, final: %s)' % (src, guard, bitmaps, dest, is_initial, is_final)
+	# 			self.g.add_edge(src, dest, None, {'weight': 0, 'input': bitmaps, 'guard' : guard, 'label': guard})
 
-			if not rem_states:
-				break
+	# 		if not rem_states:
+	# 			break
 
-		# We expect a deterministic FSA
-		assert(len(self.init)==1)
+	# 	# We expect a deterministic FSA
+	# 	assert(len(self.init)==1)
 
-		return
+	# 	return
 
 	def get_guard_bitmap(self, guard):
 		"""

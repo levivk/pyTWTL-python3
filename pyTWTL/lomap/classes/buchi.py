@@ -77,74 +77,75 @@ Edges: {edges}
 		ret.final = set(self.final)
 		return ret
 
-	def buchi_from_formula(self, formula):
-		"""
-		Creates a Buchi automaton in-place from the given LTL formula.
-		"""
+# 		Commented out when adapting for python 3
+	# def buchi_from_formula(self, formula):
+	# 	"""
+	# 	Creates a Buchi automaton in-place from the given LTL formula.
+	# 	"""
 
-		##
-		# Execute ltl2ba and get output
-		##
-		try:
-			lines = sp.check_output([ltl2ba_binary, '-f', '"%s"' % formula]).splitlines()
-		except Exception as ex:
-			raise Exception(__name__, "Problem running ltl2ba: '%s'" % ex)
+	# 	##
+	# 	# Execute ltl2ba and get output
+	# 	##
+	# 	try:
+	# 		lines = sp.check_output([ltl2ba_binary, '-f', '"%s"' % formula]).splitlines()
+	# 	except Exception as ex:
+	# 		raise Exception(__name__, "Problem running ltl2ba: '%s'" % ex)
 
-		lines = [x.strip() for x in lines]
+	# 	lines = [x.strip() for x in lines]
 
-		##
-		# Get the set of propositions
-		##
+	# 	##
+	# 	# Get the set of propositions
+	# 	##
 
-		# Replace operators [], <>, X, !, (, ), &&, ||, U, ->, <-> G, F, X, R, V
-		# with white-space
-		props = re.sub(r'[\[\]<>X!\(\)\-&|UGFRV]', ' ', formula)
-		# Replace true and false with white space
-		props = re.sub(r'\btrue\b', ' ', props)
-		props = re.sub(r'\bfalse\b', ' ', props)
-		# What remains are propositions seperated by whitespaces
-		props = set(props.strip().split())
+	# 	# Replace operators [], <>, X, !, (, ), &&, ||, U, ->, <-> G, F, X, R, V
+	# 	# with white-space
+	# 	props = re.sub(r'[\[\]<>X!\(\)\-&|UGFRV]', ' ', formula)
+	# 	# Replace true and false with white space
+	# 	props = re.sub(r'\btrue\b', ' ', props)
+	# 	props = re.sub(r'\bfalse\b', ' ', props)
+	# 	# What remains are propositions seperated by whitespaces
+	# 	props = set(props.strip().split())
 
-		# Form the bitmap dictionary of each proposition
-		# Note: range goes upto rhs-1
-		self.props = dict(list(zip(props, [2 ** x for x in range(0, len(props))])))
+	# 	# Form the bitmap dictionary of each proposition
+	# 	# Note: range goes upto rhs-1
+	# 	self.props = dict(list(zip(props, [2 ** x for x in range(0, len(props))])))
 
-		# Alphabet is the power set of propositions, where each element
-		# is a symbol that corresponds to a tuple of propositions
-		# Note: range goes upto rhs-1
-		self.alphabet = set(range(0, 2 ** len(self.props)))
+	# 	# Alphabet is the power set of propositions, where each element
+	# 	# is a symbol that corresponds to a tuple of propositions
+	# 	# Note: range goes upto rhs-1
+	# 	self.alphabet = set(range(0, 2 ** len(self.props)))
 
-		# Remove 'never' first line and '}' last line
-		del lines[0]
-		del lines[-1]
+	# 	# Remove 'never' first line and '}' last line
+	# 	del lines[0]
+	# 	del lines[-1]
 
-		# remove 'if', 'fi;' lines
-		lines = [x for x in lines if x != 'if' and x != 'fi;']
+	# 	# remove 'if', 'fi;' lines
+	# 	lines = [x for x in lines if x != 'if' and x != 'fi;']
 
-		# '::.*' means transition, '.*:' means state
-		# print '\n'.join(lines)
-		# print "\n"
-		this_state = None
-		for line in lines:
-			if(line[0:2] == '::'):
-				m = re.search(':: (.*) -> goto (.*)', line)
-				guard = m.group(1)
-				bitmaps = self.get_guard_bitmap(guard)
-				next_state = m.group(2)
-				# Add edge
-				self.g.add_edge(this_state, next_state, attr_dict={'weight': 0, 'input': bitmaps, 'guard' : guard, 'label': guard})
-			elif line[0:4] == 'skip':
-				# Add self-looping edge
-				self.g.add_edge(this_state, this_state, attr_dict={'weight': 0, 'input': self.alphabet, 'guard' : '(1)', 'label': '(1)'})
-			else:
-				this_state = line[0:-1]
-				# Add state
-				self.g.add_node(this_state)
-				# Mark final or init
-				if(this_state.endswith('init')):
-					self.init[this_state] = 1
-				if(this_state.startswith('accept')):
-					self.final.add(this_state)
+	# 	# '::.*' means transition, '.*:' means state
+	# 	# print '\n'.join(lines)
+	# 	# print "\n"
+	# 	this_state = None
+	# 	for line in lines:
+	# 		if(line[0:2] == '::'):
+	# 			m = re.search(':: (.*) -> goto (.*)', line)
+	# 			guard = m.group(1)
+	# 			bitmaps = self.get_guard_bitmap(guard)
+	# 			next_state = m.group(2)
+	# 			# Add edge
+	# 			self.g.add_edge(this_state, next_state, attr_dict={'weight': 0, 'input': bitmaps, 'guard' : guard, 'label': guard})
+	# 		elif line[0:4] == 'skip':
+	# 			# Add self-looping edge
+	# 			self.g.add_edge(this_state, this_state, attr_dict={'weight': 0, 'input': self.alphabet, 'guard' : '(1)', 'label': '(1)'})
+	# 		else:
+	# 			this_state = line[0:-1]
+	# 			# Add state
+	# 			self.g.add_node(this_state)
+	# 			# Mark final or init
+	# 			if(this_state.endswith('init')):
+	# 				self.init[this_state] = 1
+	# 			if(this_state.startswith('accept')):
+	# 				self.final.add(this_state)
 
 	def get_guard_bitmap(self, guard):
 		"""
