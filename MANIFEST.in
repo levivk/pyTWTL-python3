@@ -1,0 +1,2 @@
+# Tell setuptools to include the pyTWTL binaries
+graft */bin-*
