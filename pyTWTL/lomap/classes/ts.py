@@ -104,13 +104,13 @@ class Ts(Model):
 		try:
 			for node in list(state_attr.keys()):
 				# Reset label of the node
-				self.g.node[node]['label'] = node
+				self.g.nodes[node]['label'] = node
 				for key in list(state_attr[node].keys()):
 					# Copy defined attributes to the node in the graph
 					# This is a shallow copy, we don't touch state_attr[node][key] afterwards
-					self.g.node[node][key] = state_attr[node][key]
+					self.g.nodes[node][key] = state_attr[node][key]
 					# Define custom node label
-					self.g.node[node]['label'] = r'%s\n%s: %s' % (self.g.node[node]['label'], key, state_attr[node][key])
+					self.g.nodes[node]['label'] = r'%s\n%s: %s' % (self.g.nodes[node]['label'], key, state_attr[node][key])
 		except:
 			raise FileError('Problem setting state attributes.')
 	
@@ -151,7 +151,7 @@ class Ts(Model):
 		else:
 			# q is a normal state of the transition system
 			r = []
-			for source, target, data in self.g.out_edges_iter((q,), data=True):
+			for source, target, data in self.g.out_edges((q,), data=True):
 				r.append((target, data['weight'], data.get('control', None)))
 			return tuple(r)
 

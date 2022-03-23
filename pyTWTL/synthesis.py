@@ -34,9 +34,9 @@ from operator import attrgetter
 import numpy as np
 import networkx as nx
 
-from lomap import Ts, Model
-from lomap import ts_times_ts
-from dfa import DFAType, Op
+from .lomap import Ts, Model
+from .lomap import ts_times_ts
+from .dfa import DFAType, Op
 
 __all__ = ['ts_times_fsa', 'ts_times_ts', 'expand_duration_ts',
     'one_loop_reach_graph', 'policy_output_word', 'simple_control_policy',
@@ -180,7 +180,7 @@ def ts_times_fsa(ts, fsa): #FIXME: product automaton convention
         
         for ts_next in ts.next_states_of_wts(ts_state, traveling_states = False):
             ts_next_state = ts_next[0]
-            ts_prop = ts.g.node[ts_next_state].get('prop',set())
+            ts_prop = ts.g.nodes[ts_next_state].get('prop',set())
             
             for fsa_next_state in fsa.next_states_of_fsa(fsa_state, ts_prop):
                 next_state = (ts_next_state, fsa_next_state)
@@ -212,16 +212,16 @@ def expand_duration_ts(ts):
     ets.init = ts.init
     
     # copy nodes with data
-    ets.g.add_nodes_from(ts.g.nodes_iter(data=True))
+    ets.g.add_nodes_from(ts.g.nodes(data=True))
     
     # expand edges
     ets.state_map = dict() # reverse lookup dictionary for intermediate nodes
     ng = it.count()
-    for u, v, data in ts.g.edges_iter(data=True):
+    for u, v, data in ts.g.edges(data=True):
         # generate intermediate nodes
         aux_nodes = [u] + [next(ng) for _ in range(data['duration']-1)] + [v]
-        u_pos = np.array(ts.g.node[u]['position'])
-        v_pos = np.array(ts.g.node[v]['position'])
+        u_pos = np.array(ts.g.nodes[u]['position'])
+        v_pos = np.array(ts.g.nodes[v]['position'])
         aux_pos = [{'position' : tuple(u_pos + s * (v_pos - u_pos)), 's': s}
                                  for s in np.linspace(0, 1, num=len(aux_nodes))]
         ets.g.add_nodes_from(list(zip(aux_nodes, aux_pos)))
