@@ -166,7 +166,7 @@ def ts_times_fsa(ts, fsa): #FIXME: product automaton convention
     # Create the product_model
     product_model = Model(directed=True, multi=False)
     
-    init_state = (ts.init.keys()[0], fsa.init.keys()[0])
+    init_state = (list(ts.init.keys())[0], list(fsa.init.keys())[0])
     product_model.init[init_state] = 1
     product_model.g.add_node(init_state)
     if init_state[1] in fsa.final:
@@ -219,14 +219,14 @@ def expand_duration_ts(ts):
     ng = it.count()
     for u, v, data in ts.g.edges_iter(data=True):
         # generate intermediate nodes
-        aux_nodes = [u] + [ng.next() for _ in range(data['duration']-1)] + [v]
+        aux_nodes = [u] + [next(ng) for _ in range(data['duration']-1)] + [v]
         u_pos = np.array(ts.g.node[u]['position'])
         v_pos = np.array(ts.g.node[v]['position'])
         aux_pos = [{'position' : tuple(u_pos + s * (v_pos - u_pos)), 's': s}
                                  for s in np.linspace(0, 1, num=len(aux_nodes))]
-        ets.g.add_nodes_from(zip(aux_nodes, aux_pos))
+        ets.g.add_nodes_from(list(zip(aux_nodes, aux_pos)))
         # create intermediate edges
-        edge_list = zip(aux_nodes[:-1], aux_nodes[1:]) + zip(aux_nodes, aux_nodes)
+        edge_list = list(zip(aux_nodes[:-1], aux_nodes[1:])) + list(zip(aux_nodes, aux_nodes))
         # add intermediate edges
         ets.g.add_edges_from(edge_list, weight=1)
         # update reverse lookup map
@@ -243,12 +243,12 @@ def one_loop_reach_graph(pa, states=None):
     '''Computes the on-loop reachability graph for persistent missions.'''
     if not states:
         states = set([x for x, _ in pa.final])
-    s_init = pa.init.keys()[0][1]
+    s_init = list(pa.init.keys())[0][1]
     
     g = nx.DiGraph(name='One loop reachability graph')
     for x in states:
         paths = nx.shortest_path_length(pa.g, source=(x, s_init))
-        edges = [(x, p[0], d) for p, d in paths.iteritems() if p in pa.final]
+        edges = [(x, p[0], d) for p, d in paths.items() if p in pa.final]
         g.add_weighted_edges_from(edges)
     
     return g
@@ -277,7 +277,7 @@ def simple_control_policy(pa):
     # add virtual node with incoming edges from all final states
     pa.g.add_edges_from([(p, 'virtual') for p in pa.final])
     # compute optimal path in PA and then project onto the TS
-    pa_path = nx.shortest_path(pa.g, source=pa.init.keys()[0], target='virtual')
+    pa_path = nx.shortest_path(pa.g, source=list(pa.init.keys())[0], target='virtual')
     assert pa_path[-2] in pa.final
     pa.g.remove_node('virtual')
     return [x for x, _ in pa_path[:-1]]
@@ -298,13 +298,13 @@ def partial_control_policies(pa, dfa, init, finish, constraint=None):
     for state in (p for p in pa.g.nodes_iter() if p[1] in init):
         paths = nx.shortest_path(pa.g, source=state)
         if constraint is None:
-            sat_paths.extend([path for p, path in paths.iteritems()
+            sat_paths.extend([path for p, path in paths.items()
                                        if p[1] in finish])
         else:
             logging.debug('[]')
-            sat_paths.extend([path for p, path in paths.iteritems()
+            sat_paths.extend([path for p, path in paths.items()
                 if p[1] in finish and # is final
-                path[-2][1] in constraint.keys() and # is in restriction
+                path[-2][1] in list(constraint.keys()) and # is in restriction
                 dfa.g.has_edge(path[-2][1], p[1]) and # there is an edge
                 # the edge activates properly
                 dfa.g[path[-2][1]][p[1]]['input'] <= constraint[path[-2][1]]])
@@ -328,7 +328,7 @@ def partial_control_policies2(pa, dfa, init, finish, constraint=None):
     logging.debug('[PartialControl] init: %s, final: %s, constraint: %s',
                   init, finish, constraint)
     if constraint is not None:
-        C = constraint.viewkeys()
+        C = constraint.keys()
     
     sat_paths = []
     for source in (p for p in pa.g.nodes_iter() if p[1] in init):
@@ -351,7 +351,7 @@ def partial_control_policies2(pa, dfa, init, finish, constraint=None):
             sat_paths.extend([(paths[p], lengths[p]) for p in paths
                                                          if p[1] in finish])
         else:
-            sat_paths.extend([(path, lengths[p]) for p, path in paths.iteritems()
+            sat_paths.extend([(path, lengths[p]) for p, path in paths.items()
                if p[1] in finish and # is final
                   path[-2][1] in C and # is in restriction
                   # the edge activates properly
@@ -384,7 +384,7 @@ def relaxed_control_policy(tree, dfa, pa, constraint=None):
         M = ControlPathsSet()
         for cp in M_ch:
             paths = nx.shortest_path(pa.g, target=cp.path[0])
-            sat_paths = [p[:-1]+cp.path for p_i, p in paths.iteritems()
+            sat_paths = [p[:-1]+cp.path for p_i, p in paths.items()
                                          if p_i in tree.init]
             tau = max(len(cp.path)+tree.low-tree.high, cp.tau) #TODO: should I subtract -1?
             M.paths.extend([ControlPath(p, tau) for p in sat_paths])
@@ -406,12 +406,12 @@ def relaxed_control_policy(tree, dfa, pa, constraint=None):
     
     if tree.operation == Op.union:
         if constraint is None:
-            c_left = {s: ch.both | ch.left for s, ch in tree.choices.iteritems()}
-            c_right = {s: ch.both | ch.right for s, ch in tree.choices.iteritems()}
+            c_left = {s: ch.both | ch.left for s, ch in tree.choices.items()}
+            c_right = {s: ch.both | ch.right for s, ch in tree.choices.items()}
         else:
             c_left = dict()
             c_right = dict()
-            for s in tree.choices.viewkeys() & constraint.viewkeys():
+            for s in tree.choices.keys() & constraint.keys():
                 c_left[s] = constraint[s] & (tree.choices[s].both | tree.choices[s].left)
                 c_right[s] = constraint[s] & (tree.choices[s].both | tree.choices[s].right)
         
@@ -438,7 +438,7 @@ def compute_control_policy(pa, dfa, kind):
         if not policies:
             return None, None, None
         # keep only policies which start from the initial PA state
-        policies.paths = [p for p in policies if p.path[0] in pa.init.keys()]
+        policies.paths = [p for p in policies if p.path[0] in list(pa.init.keys())]
         # choose optimal policy with respect to temporal robustness
         optimal_pa_path = min(policies, key=attrgetter('tau'))
         optimal_ts_path = [x for x, _ in optimal_pa_path.path]
@@ -462,7 +462,7 @@ def verify(ts, dfa):
     
     dfa_complete = dfa.clone()
     dfa_complete.add_trap_state()
-    dfa_complete.g.remove_edge(iter(dfa_complete.final).next(), 'trap')
+    dfa_complete.g.remove_edge(next(iter(dfa_complete.final)), 'trap')
     
     logging.info('Constructing product automaton with infinity DFA!')
     pa = ts_times_fsa(ts, dfa_complete)
