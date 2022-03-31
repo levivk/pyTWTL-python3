@@ -1,4 +1,4 @@
-from subprocess import check_output
+from subprocess import CalledProcessError, check_output, STDOUT
 import yaml
 import networkx as nx
 import platform
@@ -48,7 +48,12 @@ def twtl_to_dfa(formula, kind, norm=False, dont_optimize=False):
         args.append('--dont-optimize')
 
     # run program and get output serialized as yaml
-    yaml_serialized_data = check_output(args, text=True)
+    try:
+        yaml_serialized_data = check_output(args, text=True, stderr=STDOUT)
+    except CalledProcessError as e:
+        print(f'\n\nERROR: DFA generation failed. Please check your TWTL specification. pyTWTL output: \n{e.output}')
+        exit()
+
 
     # python 2 to 3 yaml convert
     yaml_serialized_data = yaml_serialized_data.replace('__builtin__', 'builtins')
@@ -101,4 +106,5 @@ def twtl_to_dfa(formula, kind, norm=False, dont_optimize=False):
 
 if __name__ == '__main__':
     d = twtl_to_dfa("[H^1 r2]^[0,10] * [H^1 r5]^[0,10]", kind='infinity', norm=True)
+    # d = twtl_to_dfa("[H^1 r2]^[0,10] * [^1 r5]^[0,10", kind='infinity', norm=True)
     print(d)
