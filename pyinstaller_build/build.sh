@@ -11,6 +11,7 @@ pyinstaller twtl_translate.spec
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         cp -r dist/twtl_translate ../pyTWTL/bin-linux
 elif [[ "$OSTYPE" == "darwin"* ]]; then
+	rm -rf ../pyTWTL/bin-darwin
         cp -r dist/twtl_translate ../pyTWTL/bin-darwin
 else
         echo "Unsupported OS type:" "$OSTYPE"
