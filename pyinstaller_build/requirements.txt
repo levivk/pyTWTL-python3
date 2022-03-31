@@ -1,5 +1,5 @@
 altgraph==0.17.2
-antlr-python-runtime==3.1.3
+https://www.antlr3.org/download/Python/antlr_python_runtime-3.1.3.tar.gz
 decorator==4.4.2
 dis3==0.1.3
 macholib==1.16
