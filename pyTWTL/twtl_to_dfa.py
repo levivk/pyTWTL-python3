@@ -12,18 +12,16 @@ MAC_BIN_DIR = 'bin-darwin'
 def old_nx_nodes(g):
     return list(iter(g.node.items()))
 
-def old_nx_edges_iter(g):
-    seen = {}     # helper dict to keep track of multiply stored edges
+def old_nx_edges(g):
+    edges = []
     nodes_nbrs = g.edge.items()
     for n, nbrs in nodes_nbrs:
         for nbr, ddict in nbrs.items():
-            if nbr not in seen:
-                yield (n, nbr, ddict)
-        seen[n] = 1
-    del seen
+            edges.append( (n, nbr, ddict) )
+    return edges
 
-def old_nx_edges(g):
-    return list(old_nx_edges_iter(g))
+# def old_nx_edges(g):
+#     return list(old_nx_edges_iter(g))
 
 def twtl_to_dfa(formula, kind, norm=False, dont_optimize=False):
 
@@ -102,5 +100,5 @@ def twtl_to_dfa(formula, kind, norm=False, dont_optimize=False):
 # print(tup)
 
 if __name__ == '__main__':
-    d = twtl_to_dfa("[H^1 r2]^[0,10]", kind='infinity', norm=True)
+    d = twtl_to_dfa("[H^1 r2]^[0,10] * [H^1 r5]^[0,10]", kind='infinity', norm=True)
     print(d)
