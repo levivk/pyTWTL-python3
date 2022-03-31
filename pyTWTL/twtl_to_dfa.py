@@ -44,6 +44,10 @@ def twtl_to_dfa(formula, kind, norm=False, dont_optimize=False):
     file_path = os.path.dirname(os.path.abspath(__file__))
     bin_path = os.path.join(file_path, bin_dir, 'twtl_translate')
     args = [bin_path, formula, '--kind=' + kind]
+    if norm:
+        args.append('--norm')
+    if dont_optimize:
+        args.append('--dont-optimize')
 
     # run program and get output serialized as yaml
     yaml_serialized_data = check_output(args, text=True)
@@ -96,5 +100,5 @@ def twtl_to_dfa(formula, kind, norm=False, dont_optimize=False):
 # print(tup)
 
 if __name__ == '__main__':
-    d = twtl_to_dfa("[H^1 r2]^[0,10]", kind='both')
+    d = twtl_to_dfa("[H^1 r2]^[0,10]", kind='infinity', norm=True)
     print(d)
