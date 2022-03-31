@@ -58,6 +58,8 @@ def twtl_to_dfa(formula, kind, norm=False, dont_optimize=False):
     # Adapt to repackaging
     yaml_serialized_data = yaml_serialized_data.replace('!!python/object:lomap', '!!python/object:pyTWTL.lomap')
     yaml_serialized_data = yaml_serialized_data.replace('!!python/object:dfa', '!!python/object:pyTWTL.dfa')
+    yaml_serialized_data = yaml_serialized_data.replace('!!python/object/new:dfa', '!!python/object/new:pyTWTL.dfa')
+
 
     # This could execute arbitrary code, but the source is local and the system would have to already be comprimised to provide arbitrary yaml
     tup = yaml.unsafe_load(yaml_serialized_data)
