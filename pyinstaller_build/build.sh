@@ -9,7 +9,8 @@ pyinstaller twtl_translate.spec
 
 # copy to respective folder
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        cp -r dist/twtl_translate ../pyTWTL/bin-linux
+	rm -rf ../pyTWTL/bin-linux/*
+        cp -ra dist/twtl_translate/. ../pyTWTL/bin-linux/
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 	rm -rf ../pyTWTL/bin-darwin
         cp -r dist/twtl_translate ../pyTWTL/bin-darwin
