@@ -1,4 +1,30 @@
-Ubuntu
+Ubuntu 20.04
+
+# install git, curl, binutils, and python 2.7
+sudo apt install git curl binutils python2-dev -y
+
+# install pip
+curl https://bootstrap.pypa.io/pip/2.7/get-pip.py | python2
+
+# clone this repository
+git clone https://github.com/levivk/pyTWTL-python3
+cd pyTWTL-python3/pyinstaller_build
+
+# install the requirements
+python2 -m pip install -r requirements.txt
+export PATH=$PATH:/home/$USER/.local/bin
+
+# run the build script
+bash build.sh
+
+# run the test
+bash test.sh
+
+# You should get a few hundred lines of yaml output and no errors
+
+# Uninstall python 2.7
+sudo apt purge python2 -y
+sudo apt autoremove -y
 
 Mac OS (macOS Catalina Version 10.15.7 and Monterey Version 12.3)
 
