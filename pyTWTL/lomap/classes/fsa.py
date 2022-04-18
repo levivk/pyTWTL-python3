@@ -346,7 +346,7 @@ Edges: {edges}
 		trap_added = False
 		for s in self.g.nodes():
 			rem_alphabet = set(self.alphabet)
-			for _, _, d in self.g.out_edges_iter(s, data=True):
+			for _, _, d in self.g.out_edges(s, data=True):
 				rem_alphabet -= d['input']
 			if rem_alphabet:
 				if not trap_added: #'trap' not in self.g:
