@@ -166,13 +166,14 @@ def ts_times_fsa(ts, fsa): #FIXME: product automaton convention
     # Create the product_model
     product_model = Model(directed=True, multi=False)
     
-    init_state = (list(ts.init.keys())[0], list(fsa.init.keys())[0])
-    product_model.init[init_state] = 1
-    product_model.g.add_node(init_state)
-    if init_state[1] in fsa.final:
-        product_model.final.add(init_state)
-    
-    stack = [init_state]
+    init_state_list = [(i, list(fsa.init.keys())[0]) for i in ts.g.nodes()]
+    for i in init_state_list:
+        product_model.init[i] = 1
+        product_model.g.add_node(i)
+        if i[1] in fsa.final:
+            product_model.final.add(i)
+    stack = init_state_list
+
     # Consume the stack
     while(stack):
         cur_state = stack.pop()
